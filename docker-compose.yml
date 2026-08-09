@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  catalog-mongo:
+    image: mongo:6.0
+    container_name: catalog-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - catalog_db_data:/data/db
+
+  order-mongo:
+    image: mongo:6.0
+    container_name: order-mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - order_db_data:/data/db
+
+  rating-mongo:
+    image: mongo:6.0
+    container_name: rating-mongo
+    ports:
+      - "27019:27017"
+    volumes:
+      - rating_db_data:/data/db
+
+  notification-mongo:
+    image: mongo:6.0
+    container_name: notification-mongo
+    ports:
+      - "27020:27017"
+    volumes:
+      - notification_db_data:/data/db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  catalog-service:
+    build: ./catalog-service
+    container_name: catalog-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - MONGO_URI=mongodb://catalog-mongo:27017/catalog_db
+    depends_on:
+      - catalog-mongo
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGO_URI=mongodb://order-mongo:27017/order_db
+      - CATALOG_SERVICE_URL=http://catalog-service:3001
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      order-mongo:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  rating-service:
+    build: ./rating-service
+    container_name: rating-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - MONGO_URI=mongodb://rating-mongo:27017/rating_db
+      - CATALOG_SERVICE_URL=http://catalog-service:3001
+    depends_on:
+      - rating-mongo
+      - catalog-service
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - MONGO_URI=mongodb://notification-mongo:27017/notification_db
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      notification-mongo:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - CATALOG_SERVICE_URL=http://catalog-service:3001
+      - ORDER_SERVICE_URL=http://order-service:3002
+      - RATING_SERVICE_URL=http://rating-service:3003
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3004
+    depends_on:
+      - catalog-service
+      - order-service
+      - rating-service
+      - notification-service
+
+volumes:
+  catalog_db_data:
+  order_db_data:
+  rating_db_data:
+  notification_db_data:

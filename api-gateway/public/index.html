@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cake Delight - Microservices Backend Demo</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="split-container">
+    <!-- LEFT 50%: Minimal App UI -->
+    <div class="panel left-panel">
+      <header class="app-header">
+        <div class="logo">
+          <h2>Cake Delight UI</h2>
+        </div>
+        <div class="user-info">
+          <span>User: <strong>user-123</strong></span>
+          <button id="cartBtn" class="btn btn-primary btn-sm">🛒 Cart (<span id="cartCount">0</span>)</button>
+          <button id="notifBtn" class="btn btn-secondary btn-sm">🔔 Notifs (<span id="notifCount">0</span>)</button>
+        </div>
+      </header>
+
+      <div class="panel-content">
+        <!-- Catalog Filter -->
+        <section class="card">
+          <h4>Catalog Filter</h4>
+          <form id="filterForm" class="filter-form">
+            <input type="text" id="searchName" placeholder="Search cake name...">
+            <select id="searchCategory">
+              <option value="">All Categories</option>
+              <option value="Chocolate">Chocolate</option>
+              <option value="Birthday">Birthday</option>
+              <option value="Fruit">Fruit</option>
+              <option value="Specialty">Specialty</option>
+            </select>
+            <input type="number" id="minPrice" placeholder="Min $" min="0">
+            <input type="number" id="maxPrice" placeholder="Max $" min="0">
+            <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+            <button type="button" id="resetFilterBtn" class="btn btn-outline btn-sm">Reset</button>
+          </form>
+        </section>
+
+        <!-- Cake List -->
+        <section class="card">
+          <h4>Cakes Catalog</h4>
+          <div id="cakesGrid" class="cakes-list">
+            <div class="loading">Loading catalog...</div>
+          </div>
+        </section>
+
+        <!-- Shopping Cart Section -->
+        <section class="card">
+          <div class="card-header">
+            <h4>Shopping Basket</h4>
+            <button id="clearCartBtn" class="btn btn-danger btn-sm" style="display:none;">Clear</button>
+          </div>
+          <div id="cartItemsList" class="cart-items">
+            <p class="empty-text">Basket is empty.</p>
+          </div>
+          <div id="cartSummary" class="cart-summary" style="display:none;">
+            <div>Total: <strong id="cartTotalAmount">$0</strong></div>
+            <button id="checkoutBtn" class="btn btn-success btn-sm">Checkout Order</button>
+          </div>
+        </section>
+
+        <!-- Orders & Rating Section -->
+        <section class="card">
+          <h4>My Orders</h4>
+          <div id="ordersList" class="orders-list">
+            <p class="empty-text">No orders placed yet.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- RIGHT 50%: API Request & Response Inspector -->
+    <div class="panel right-panel">
+      <header class="inspector-header">
+        <div class="logo">
+          <span>⚡</span>
+          <h2>Live Backend API Inspector</h2>
+        </div>
+        <button id="clearLogsBtn" class="btn btn-outline btn-sm">Clear Logs</button>
+      </header>
+
+      <div class="panel-content inspector-content">
+        <!-- Active Request Highlight -->
+        <section class="inspector-card">
+          <div class="inspector-card-header">
+            <h4>Latest API Request / Response</h4>
+            <span id="activeStatus" class="status-badge status-idle">IDLE</span>
+          </div>
+
+          <div class="log-detail">
+            <div class="detail-block">
+              <label>HTTP Request:</label>
+              <div id="activeRequest" class="code-block">Waiting for API request...</div>
+            </div>
+
+            <div class="detail-block">
+              <label>HTTP Response Payload:</label>
+              <pre id="activeResponse" class="code-block">No response captured yet.</pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- API Activity Log Stream -->
+        <section class="inspector-card" style="flex-grow: 1;">
+          <h4>API Activity Stream</h4>
+          <div id="apiLogsStream" class="logs-stream">
+            <p class="empty-text">Click any UI button to trigger API calls!</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Drawer Modal -->
+  <div id="notifModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>User Notifications (Notification Service)</h3>
+        <span class="close-modal" id="closeNotif">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div id="notifList">
+          <p class="empty-text">No notifications found.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rating Modal -->
+  <div id="ratingModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Submit Rating (Rating Service)</h3>
+        <span class="close-modal" id="closeRating">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="ratingForm">
+          <input type="hidden" id="rateCakeId">
+          <input type="hidden" id="rateOrderId">
+          <div class="form-group" style="margin-bottom: 0.8rem;">
+            <label>Cake Name:</label>
+            <strong id="rateCakeName">-</strong>
+          </div>
+          <div class="form-group" style="margin-bottom: 0.8rem;">
+            <label for="ratingValue">Rating Score (1-5):</label>
+            <select id="ratingValue" required>
+              <option value="5">5 Stars ⭐⭐⭐⭐⭐</option>
+              <option value="4">4 Stars ⭐⭐⭐⭐</option>
+              <option value="3">3 Stars ⭐⭐⭐</option>
+              <option value="2">2 Stars ⭐⭐</option>
+              <option value="1">1 Star ⭐</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0.8rem;">
+            <label for="ratingReview">Review Comments:</label>
+            <textarea id="ratingReview" rows="2" placeholder="Write feedback..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Rating</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

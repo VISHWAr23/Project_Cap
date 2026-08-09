@@ -1,0 +1,17 @@
+{
+  "name": "cake-delight-root",
+  "version": "1.0.0",
+  "description": "Root project runner for Cake Delight capstone microservices",
+  "scripts": {
+    "test": "jest --runInBand",
+    "test:catalog": "cd catalog-service && npm test",
+    "test:order": "cd order-service && npm test",
+    "test:rating": "cd rating-service && npm test",
+    "test:notification": "cd notification-service && npm test"
+  },
+  "devDependencies": {
+    "express": "^4.22.2",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  }
+}

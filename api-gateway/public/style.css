@@ -1,0 +1,333 @@
+:root {
+  --bg-left: #0f172a;
+  --bg-right: #090d16;
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-btn: #0284c7;
+  --danger: #dc2626;
+  --success: #16a34a;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Fira Code', 'Outfit', monospace, sans-serif;
+  border-radius: 0 !important; /* Force sharp corners across all UI elements */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
+  background: transparent !important;
+}
+
+body {
+  background-color: #000000;
+  color: var(--text-main);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.split-container {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+}
+
+.panel {
+  width: 50%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.left-panel {
+  background-color: var(--bg-left);
+  border-right: 1px solid var(--card-border);
+}
+
+.right-panel {
+  background-color: var(--bg-right);
+}
+
+/* Headers */
+.app-header, .inspector-header {
+  padding: 0.75rem 1rem;
+  background-color: #1e293b;
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+}
+
+/* Scrollable Content */
+.panel-content {
+  padding: 0.8rem;
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* Sharp Rectangle Cards */
+.card, .inspector-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  padding: 0.8rem;
+}
+
+.card h4, .inspector-card h4 {
+  font-size: 0.88rem;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-header, .inspector-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+/* Minimal Forms */
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+input, select, textarea {
+  background-color: #0f172a;
+  border: 1px solid var(--card-border);
+  color: var(--text-main);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.82rem;
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+}
+
+/* Minimal Sharp Buttons */
+.btn {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--card-border);
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.82rem;
+  background-color: #334155;
+  color: var(--text-main);
+}
+
+.btn-primary { background-color: var(--accent-btn); color: white; border-color: var(--accent-btn); }
+.btn-secondary { background-color: #475569; color: white; border-color: #475569; }
+.btn-outline { background: transparent; border: 1px solid var(--card-border); color: var(--text-muted); }
+.btn-success { background-color: var(--success); color: white; border-color: var(--success); }
+.btn-danger { background-color: var(--danger); color: white; border-color: var(--danger); }
+.btn-sm { padding: 0.2rem 0.45rem; font-size: 0.75rem; }
+
+/* Cakes List */
+.cakes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.cake-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #0f172a;
+  padding: 0.5rem;
+  border: 1px solid var(--card-border);
+}
+
+.cake-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.cake-name { font-weight: 600; font-size: 0.85rem; }
+.cake-meta { font-size: 0.75rem; color: var(--text-muted); }
+
+/* Cart Items & Summary */
+.cart-items {
+  max-height: 120px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cart-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #0f172a;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--card-border);
+  font-size: 0.8rem;
+}
+
+.cart-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--card-border);
+}
+
+/* Orders List */
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.order-box {
+  background-color: #0f172a;
+  border: 1px solid var(--card-border);
+  padding: 0.5rem;
+  font-size: 0.78rem;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 0.15rem 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: 'Fira Code', monospace;
+  border: 1px solid var(--card-border);
+}
+
+.status-idle { background-color: #1e293b; color: #94a3b8; }
+.status-success { background-color: #064e3b; color: #34d399; border-color: #059669; }
+.status-error { background-color: #7f1d1d; color: #f87171; border-color: #dc2626; }
+
+/* Sharp Code Blocks */
+.log-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-block label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 0.15rem;
+  display: block;
+}
+
+.code-block {
+  font-family: 'Fira Code', monospace;
+  background-color: #030712;
+  border: 1px solid var(--card-border);
+  color: #38bdf8;
+  padding: 0.5rem;
+  font-size: 0.78rem;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Stream Log List */
+.logs-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.log-stream-item {
+  background-color: #030712;
+  border: 1px solid var(--card-border);
+  padding: 0.4rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.log-method {
+  font-weight: 600;
+  padding: 0.1rem 0.25rem;
+  border: 1px solid var(--card-border);
+}
+.method-GET { background-color: #0284c7; color: white; }
+.method-POST { background-color: #16a34a; color: white; }
+.method-PUT { background-color: #d97706; color: white; }
+.method-DELETE { background-color: #dc2626; color: white; }
+
+.empty-text {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  padding: 0.8rem 0;
+}
+
+/* Sharp Modals */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.8);
+  z-index: 200;
+  justify-content: center; align-items: center;
+}
+.modal.active { display: flex; }
+.modal-content {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  width: 90%; max-width: 420px;
+}
+.modal-header {
+  padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--card-border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.close-modal { font-size: 1.1rem; cursor: pointer; color: var(--text-muted); }
+.modal-body { padding: 0.8rem; max-height: 70vh; overflow-y: auto; }
+
+/* Sharp Toast Container */
+.toast-container { position: fixed; bottom: 12px; left: 12px; z-index: 300; display: flex; flex-direction: column; gap: 6px; }
+.toast { background-color: #1e293b; border: 1px solid var(--card-border); color: white; padding: 0.5rem 0.8rem; font-size: 0.78rem; }
