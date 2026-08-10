@@ -14,65 +14,129 @@
     <div class="panel left-panel">
       <header class="app-header">
         <div class="logo">
-          <h2>Cake Delight UI</h2>
+          <h2 id="headerTitle">Cake Delight UI</h2>
         </div>
         <div class="user-info">
-          <span>User: <strong>user-123</strong></span>
+          <button id="modeToggleBtn" class="btn btn-secondary btn-sm" style="background:#7c3aed; border-color:#6d28d9;">🛠️ Switch to Admin</button>
+          <span id="userBadge">User: <strong>user-123</strong></span>
           <button id="cartBtn" class="btn btn-primary btn-sm">🛒 Cart (<span id="cartCount">0</span>)</button>
           <button id="notifBtn" class="btn btn-secondary btn-sm">🔔 Notifs (<span id="notifCount">0</span>)</button>
         </div>
       </header>
 
       <div class="panel-content">
-        <!-- Catalog Filter -->
-        <section class="card">
-          <h4>Catalog Filter</h4>
-          <form id="filterForm" class="filter-form">
-            <input type="text" id="searchName" placeholder="Search cake name...">
-            <select id="searchCategory">
-              <option value="">All Categories</option>
-              <option value="Chocolate">Chocolate</option>
-              <option value="Birthday">Birthday</option>
-              <option value="Fruit">Fruit</option>
-              <option value="Specialty">Specialty</option>
-            </select>
-            <input type="number" id="minPrice" placeholder="Min $" min="0">
-            <input type="number" id="maxPrice" placeholder="Max $" min="0">
-            <button type="submit" class="btn btn-primary btn-sm">Filter</button>
-            <button type="button" id="resetFilterBtn" class="btn btn-outline btn-sm">Reset</button>
-          </form>
-        </section>
+        <!-- CUSTOMER VIEW -->
+        <div id="customerView">
+          <!-- Catalog Filter -->
+          <section class="card" style="margin-bottom:0.8rem;">
+            <h4>Catalog Filter</h4>
+            <form id="filterForm" class="filter-form">
+              <input type="text" id="searchName" placeholder="Search cake name...">
+              <select id="searchCategory">
+                <option value="">All Categories</option>
+                <option value="Chocolate">Chocolate</option>
+                <option value="Birthday">Birthday</option>
+                <option value="Fruit">Fruit</option>
+                <option value="Specialty">Specialty</option>
+              </select>
+              <input type="number" id="minPrice" placeholder="Min $" min="0">
+              <input type="number" id="maxPrice" placeholder="Max $" min="0">
+              <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+              <button type="button" id="resetFilterBtn" class="btn btn-outline btn-sm">Reset</button>
+            </form>
+          </section>
 
-        <!-- Cake List -->
-        <section class="card">
-          <h4>Cakes Catalog</h4>
-          <div id="cakesGrid" class="cakes-list">
-            <div class="loading">Loading catalog...</div>
-          </div>
-        </section>
+          <!-- Cake List -->
+          <section class="card" style="margin-bottom:0.8rem;">
+            <h4>Cakes Catalog</h4>
+            <div id="cakesGrid" class="cakes-list">
+              <div class="loading">Loading catalog...</div>
+            </div>
+          </section>
 
-        <!-- Shopping Cart Section -->
-        <section class="card">
-          <div class="card-header">
-            <h4>Shopping Basket</h4>
-            <button id="clearCartBtn" class="btn btn-danger btn-sm" style="display:none;">Clear</button>
-          </div>
-          <div id="cartItemsList" class="cart-items">
-            <p class="empty-text">Basket is empty.</p>
-          </div>
-          <div id="cartSummary" class="cart-summary" style="display:none;">
-            <div>Total: <strong id="cartTotalAmount">$0</strong></div>
-            <button id="checkoutBtn" class="btn btn-success btn-sm">Checkout Order</button>
-          </div>
-        </section>
+          <!-- Shopping Cart Section -->
+          <section class="card" style="margin-bottom:0.8rem;">
+            <div class="card-header">
+              <h4>Shopping Basket</h4>
+              <button id="clearCartBtn" class="btn btn-danger btn-sm" style="display:none;">Clear</button>
+            </div>
+            <div id="cartItemsList" class="cart-items">
+              <p class="empty-text">Basket is empty.</p>
+            </div>
+            <div id="cartSummary" class="cart-summary" style="display:none;">
+              <div>Total: <strong id="cartTotalAmount">$0</strong></div>
+              <button id="checkoutBtn" class="btn btn-success btn-sm">Checkout Order</button>
+            </div>
+          </section>
 
-        <!-- Orders & Rating Section -->
-        <section class="card">
-          <h4>My Orders</h4>
-          <div id="ordersList" class="orders-list">
-            <p class="empty-text">No orders placed yet.</p>
-          </div>
-        </section>
+          <!-- Orders & Rating Section -->
+          <section class="card">
+            <h4>My Orders</h4>
+            <div id="ordersList" class="orders-list">
+              <p class="empty-text">No orders placed yet.</p>
+            </div>
+          </section>
+        </div>
+
+        <!-- ADMIN VIEW -->
+        <div id="adminView" style="display:none;">
+          <!-- Cake Form (Add / Edit) -->
+          <section class="card" style="margin-bottom:0.8rem;">
+            <h4 id="adminFormTitle">🛠️ Add New Cake</h4>
+            <form id="adminCakeForm" class="filter-form" style="display:flex; flex-direction:column; gap:0.5rem;">
+              <input type="hidden" id="adminCakeId">
+              <div style="display:flex; gap:0.4rem;">
+                <input type="text" id="adminCakeName" placeholder="Cake Name" required style="flex:2;">
+                <select id="adminCakeCategory" required style="flex:1;">
+                  <option value="Chocolate">Chocolate</option>
+                  <option value="Birthday">Birthday</option>
+                  <option value="Fruit">Fruit</option>
+                  <option value="Specialty">Specialty</option>
+                </select>
+              </div>
+              <div style="display:flex; gap:0.4rem; align-items:center;">
+                <input type="number" id="adminCakePrice" placeholder="Price $" min="1" required style="flex:1;">
+                <select id="adminCakeAvailability" style="flex:1;">
+                  <option value="true">In Stock (Available)</option>
+                  <option value="false">Out of Stock</option>
+                </select>
+                <button type="submit" id="adminSaveCakeBtn" class="btn btn-success btn-sm">Save Cake</button>
+                <button type="button" id="adminCancelEditBtn" class="btn btn-outline btn-sm" style="display:none;">Cancel</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Manage Catalog List -->
+          <section class="card" style="margin-bottom:0.8rem;">
+            <h4>Manage Catalog</h4>
+            <div id="adminCakesList" class="cakes-grid">
+              <div class="loading">Loading catalog for admin...</div>
+            </div>
+          </section>
+
+          <!-- Order Lookup Inspector -->
+          <section class="card" style="margin-bottom:0.8rem;">
+            <h4>Order Lookup Inspector</h4>
+            <div style="display:flex; gap:0.4rem;">
+              <input type="text" id="adminOrderIdInput" placeholder="Enter Order ID..." style="flex:1;">
+              <button id="adminInspectOrderBtn" class="btn btn-primary btn-sm">Inspect Order</button>
+            </div>
+          </section>
+
+          <!-- Cake Reviews Inspector -->
+          <section class="card">
+            <h4>Cake Reviews & Rating Analysis</h4>
+            <div style="display:flex; gap:0.4rem; margin-bottom:0.5rem;">
+              <select id="adminRatingCakeSelect" style="flex:1;">
+                <option value="">Select a Cake to View Reviews</option>
+              </select>
+              <button id="adminInspectRatingsBtn" class="btn btn-primary btn-sm">Load Reviews</button>
+            </div>
+            <div id="adminRatingsContainer">
+              <p class="empty-text">Select a cake above to inspect customer review history.</p>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
 

@@ -177,6 +177,8 @@ async function initBasket() {
   loadBasket();
 }
 
+const DEFAULT_CAKE_IMG = 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300';
+
 // 2. Load Cakes
 async function loadCakes(params = {}) {
   cakesGrid.innerHTML = '<div class="loading">Loading catalog...</div>';
@@ -198,17 +200,22 @@ async function loadCakes(params = {}) {
     const avg = cake.averageRating ? cake.averageRating : 0;
     const count = cake.ratingCount ? cake.ratingCount : 0;
     const ratingText = count > 0 ? `⭐ ${avg} (${count})` : '⭐ New (0)';
+    const img = cake.imageUrl || DEFAULT_CAKE_IMG;
 
     const item = document.createElement('div');
-    item.className = 'cake-item';
+    item.className = 'cake-card';
     item.innerHTML = `
-      <div class="cake-info">
-        <span class="cake-name">${cake.name}</span>
-        <span class="cake-meta">${cake.category} | $${cake.price} | ${ratingText}</span>
+      <img src="${img}" alt="${cake.name}" class="cake-img" onerror="this.src='${DEFAULT_CAKE_IMG}'">
+      <div class="cake-card-body">
+        <div class="cake-name">${cake.name}</div>
+        <div class="cake-meta">${cake.category} • ${ratingText}</div>
+        <div class="cake-price-row">
+          <span class="cake-price">$${cake.price}</span>
+          <button class="btn btn-primary btn-sm" onclick="addToBasket('${cake._id}')" ${!cake.availability ? 'disabled' : ''}>
+            ${cake.availability ? 'Add +1' : 'Off Stock'}
+          </button>
+        </div>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="addToBasket('${cake._id}')" ${!cake.availability ? 'disabled' : ''}>
-        ${cake.availability ? 'Add +1' : 'Off Stock'}
-      </button>
     `;
     cakesGrid.appendChild(item);
   }
@@ -217,11 +224,24 @@ async function loadCakes(params = {}) {
 // 3. Add to Basket
 async function addToBasket(cakeId) {
   if (!currentBasketId) await initBasket();
-  const res = await apiCall(`/baskets/${currentBasketId}/items`, {
+  let res = await apiCall(`/baskets/${currentBasketId}/items`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ cakeId, quantity: 1 })
   });
+
+  if (res.status === 404) {
+    localStorage.removeItem('cake_basket_id');
+    currentBasketId = null;
+    await initBasket();
+    if (currentBasketId) {
+      res = await apiCall(`/baskets/${currentBasketId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cakeId, quantity: 1 })
+      });
+    }
+  }
 
   if (res.data && res.data.success) {
     showToast(`Added ${cakesMap[cakeId]?.name || 'cake'}!`, 'success');
@@ -235,6 +255,13 @@ async function addToBasket(cakeId) {
 async function loadBasket() {
   if (!currentBasketId) return;
   const res = await apiCall(`/baskets/${currentBasketId}`);
+
+  if (res.status === 404) {
+    localStorage.removeItem('cake_basket_id');
+    currentBasketId = null;
+    await initBasket();
+    return;
+  }
 
   if (!res.data || !res.data.success || !res.data.data || !res.data.data.items || res.data.data.items.length === 0) {
     cartCount.textContent = '0';
@@ -440,6 +467,226 @@ closeRating.addEventListener('click', () => ratingModal.classList.remove('active
 
 clearCartBtn.addEventListener('click', clearBasket);
 checkoutBtn.addEventListener('click', performCheckout);
+
+// ==================== ADMIN PANEL LOGIC ====================
+let currentMode = 'customer'; // 'customer' | 'admin'
+
+const modeToggleBtn = document.getElementById('modeToggleBtn');
+const customerView = document.getElementById('customerView');
+const adminView = document.getElementById('adminView');
+const headerTitle = document.getElementById('headerTitle');
+const userBadge = document.getElementById('userBadge');
+
+const adminCakeForm = document.getElementById('adminCakeForm');
+const adminFormTitle = document.getElementById('adminFormTitle');
+const adminCakeId = document.getElementById('adminCakeId');
+const adminCakeName = document.getElementById('adminCakeName');
+const adminCakeCategory = document.getElementById('adminCakeCategory');
+const adminCakePrice = document.getElementById('adminCakePrice');
+const adminCakeAvailability = document.getElementById('adminCakeAvailability');
+const adminSaveCakeBtn = document.getElementById('adminSaveCakeBtn');
+const adminCancelEditBtn = document.getElementById('adminCancelEditBtn');
+const adminCakesList = document.getElementById('adminCakesList');
+
+const adminOrderIdInput = document.getElementById('adminOrderIdInput');
+const adminInspectOrderBtn = document.getElementById('adminInspectOrderBtn');
+
+const adminRatingCakeSelect = document.getElementById('adminRatingCakeSelect');
+const adminInspectRatingsBtn = document.getElementById('adminInspectRatingsBtn');
+const adminRatingsContainer = document.getElementById('adminRatingsContainer');
+
+// Mode Toggle Handler
+modeToggleBtn.addEventListener('click', () => {
+  if (currentMode === 'customer') {
+    currentMode = 'admin';
+    customerView.style.display = 'none';
+    adminView.style.display = 'block';
+    headerTitle.textContent = '🛠️ Cake Delight Admin Panel';
+    userBadge.innerHTML = 'Role: <strong style="color:var(--accent);">Admin</strong>';
+    modeToggleBtn.textContent = '👤 Switch to Customer';
+    modeToggleBtn.style.background = '#0284c7';
+    modeToggleBtn.style.borderColor = '#0284c7';
+    loadAdminCakes();
+  } else {
+    currentMode = 'customer';
+    customerView.style.display = 'block';
+    adminView.style.display = 'none';
+    headerTitle.textContent = 'Cake Delight UI';
+    userBadge.innerHTML = 'User: <strong>user-123</strong>';
+    modeToggleBtn.textContent = '🛠️ Switch to Admin';
+    modeToggleBtn.style.background = '#7c3aed';
+    modeToggleBtn.style.borderColor = '#6d28d9';
+    loadCakes();
+  }
+});
+
+// Load Admin Catalog
+async function loadAdminCakes() {
+  adminCakesList.innerHTML = '<div class="loading">Loading catalog for admin...</div>';
+  const res = await apiCall('/cakes');
+
+  if (!res.data || !res.data.success || !res.data.data) {
+    adminCakesList.innerHTML = '<p class="empty-text">Failed to load catalog.</p>';
+    return;
+  }
+
+  const cakes = res.data.data;
+  adminCakesList.innerHTML = '';
+  adminRatingCakeSelect.innerHTML = '<option value="">Select a Cake to View Reviews</option>';
+
+  cakes.forEach(cake => {
+    // Populate Rating Select options
+    const opt = document.createElement('option');
+    opt.value = cake._id;
+    opt.textContent = `${cake.name} (${cake.category})`;
+    adminRatingCakeSelect.appendChild(opt);
+
+    const isStock = cake.availability;
+    const img = cake.imageUrl || DEFAULT_CAKE_IMG;
+
+    const item = document.createElement('div');
+    item.className = 'cake-card';
+    item.innerHTML = `
+      <img src="${img}" alt="${cake.name}" class="cake-img" onerror="this.src='${DEFAULT_CAKE_IMG}'">
+      <div class="cake-card-body">
+        <div class="cake-name">${cake.name}</div>
+        <div class="cake-meta">${cake.category} • $${cake.price}</div>
+        <div class="cake-meta">Status: <strong style="color:${isStock ? 'var(--success)' : 'var(--danger)'};">${isStock ? 'In Stock' : 'Out of Stock'}</strong></div>
+        <div class="cake-price-row" style="margin-top:0.4rem;">
+          <button class="btn btn-outline btn-sm" onclick="editCakeForm('${cake._id}', '${cake.name.replace(/'/g, "\\'")}', '${cake.category}', ${cake.price}, ${cake.availability})">Edit ✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteAdminCake('${cake._id}')">Delete 🗑️</button>
+        </div>
+      </div>
+    `;
+    adminCakesList.appendChild(item);
+  });
+}
+
+// Edit Cake Form Populate
+function editCakeForm(id, name, category, price, availability) {
+  adminCakeId.value = id;
+  adminCakeName.value = name;
+  adminCakeCategory.value = category;
+  adminCakePrice.value = price;
+  adminCakeAvailability.value = availability.toString();
+
+  adminFormTitle.textContent = `✏️ Edit Cake: ${name}`;
+  adminSaveCakeBtn.textContent = 'Update Cake';
+  adminCancelEditBtn.style.display = 'inline-block';
+}
+
+// Reset Admin Cake Form
+function resetAdminForm() {
+  adminCakeId.value = '';
+  adminCakeForm.reset();
+  adminFormTitle.textContent = '🛠️ Add New Cake';
+  adminSaveCakeBtn.textContent = 'Save Cake';
+  adminCancelEditBtn.style.display = 'none';
+}
+adminCancelEditBtn.addEventListener('click', resetAdminForm);
+
+// Add / Update Cake Submit Handler
+adminCakeForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = adminCakeId.value;
+  const name = adminCakeName.value.trim();
+  const category = adminCakeCategory.value;
+  const price = Number(adminCakePrice.value);
+  const availability = adminCakeAvailability.value === 'true';
+
+  let res;
+  if (id) {
+    // PUT /api/cakes/:id
+    res = await apiCall(`/cakes/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, category, price, availability })
+    });
+  } else {
+    // POST /api/cakes
+    res = await apiCall('/cakes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, category, price, availability })
+    });
+  }
+
+  if (res.data && res.data.success) {
+    showToast(id ? 'Cake updated successfully!' : 'New cake added to catalog!', 'success');
+    resetAdminForm();
+    loadAdminCakes();
+  } else {
+    showToast(res.data?.message || 'Failed to save cake', 'danger');
+  }
+});
+
+// Delete Admin Cake Handler
+async function deleteAdminCake(cakeId) {
+  if (!confirm(`Are you sure you want to delete cake ID ${cakeId}?`)) return;
+  const res = await apiCall(`/cakes/${cakeId}`, { method: 'DELETE' });
+
+  if (res.data && res.data.success) {
+    showToast('Cake deleted from catalog!', 'success');
+    loadAdminCakes();
+  } else {
+    showToast(res.data?.message || 'Failed to delete cake', 'danger');
+  }
+}
+
+// Admin Order Inspector Handler (GET /api/orders/:id)
+adminInspectOrderBtn.addEventListener('click', async () => {
+  const orderId = adminOrderIdInput.value.trim();
+  if (!orderId) {
+    showToast('Please enter an Order ID', 'danger');
+    return;
+  }
+  const res = await apiCall(`/orders/${orderId}`);
+  if (res.data && res.data.success) {
+    showToast(`Loaded Order #${orderId} payload in API Inspector`, 'success');
+  } else {
+    showToast(res.data?.message || 'Order not found', 'danger');
+  }
+});
+
+// Admin Cake Reviews Inspector Handler (GET /api/ratings/cake/:cakeId)
+adminInspectRatingsBtn.addEventListener('click', async () => {
+  const cakeId = adminRatingCakeSelect.value;
+  if (!cakeId) {
+    showToast('Please select a cake from the dropdown', 'danger');
+    return;
+  }
+
+  adminRatingsContainer.innerHTML = '<div class="loading">Loading ratings & reviews...</div>';
+
+  // Call GET /api/ratings/cake/:cakeId
+  const res = await apiCall(`/ratings/cake/${cakeId}`);
+
+  if (!res.data || !res.data.success || !res.data.data) {
+    adminRatingsContainer.innerHTML = '<p class="empty-text">No reviews found for this cake.</p>';
+    return;
+  }
+
+  const ratings = res.data.data;
+  if (ratings.length === 0) {
+    adminRatingsContainer.innerHTML = '<p class="empty-text">No customer reviews submitted for this cake yet.</p>';
+    return;
+  }
+
+  adminRatingsContainer.innerHTML = '';
+  ratings.forEach(r => {
+    const box = document.createElement('div');
+    box.className = 'order-box';
+    box.style.marginBottom = '0.35rem';
+    box.innerHTML = `
+      <div style="display:flex; justify-content:space-between;">
+        <strong>Score: ${r.rating} ⭐</strong>
+        <span style="color:var(--text-muted); font-size:0.72rem;">User: ${r.userId}</span>
+      </div>
+      <div style="margin-top:0.2rem; color:var(--text-main); font-style:italic;">"${r.review || 'No written feedback'}"</div>
+    `;
+    adminRatingsContainer.appendChild(box);
+  });
+});
 
 // Initial Calls
 initBasket();

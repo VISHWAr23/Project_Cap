@@ -20,6 +20,7 @@ const basketSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
+    unique: true,
     default: 'user-123'
   },
   items: [basketItemSchema]

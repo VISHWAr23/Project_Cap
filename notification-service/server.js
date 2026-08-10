@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
+const requestLogger = require('./middleware/requestLogger');
+const errorMiddleware = require('./middleware/errorMiddleware');
 const notificationRoutes = require('./routes/notificationRoutes');
 const { startConsumer } = require('./rabbitmq');
 
@@ -12,6 +14,7 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/notificati
 
 app.use(cors());
 app.use(express.json());
+app.use(requestLogger);
 
 // Routes
 app.use('/notifications', notificationRoutes);
@@ -24,14 +27,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Basic Error Handling Middleware
-app.use((err, req, res, next) => {
-  console.error('Unhandled Error in notification-service:', err.message);
-  res.status(500).json({
-    success: false,
-    message: err.message || 'Internal Server Error'
-  });
-});
+// Modular Error Handling Middleware
+app.use(errorMiddleware);
 
 // Database Connection & Server Start
 mongoose.connect(MONGO_URI)

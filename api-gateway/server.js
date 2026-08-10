@@ -5,6 +5,9 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
+const requestLogger = require('./middleware/requestLogger');
+const errorMiddleware = require('./middleware/errorMiddleware');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -14,6 +17,7 @@ const RATING_SERVICE_URL = process.env.RATING_SERVICE_URL || 'http://localhost:3
 const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3004';
 
 app.use(cors());
+app.use(requestLogger);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -23,26 +27,17 @@ app.get('/health', (req, res) => {
   });
 });
 
+const proxyOptions = (prefix) => ({
+  proxyReqPathResolver: (req) => prefix + (req.url === '/' ? '' : req.url),
+  parseReqBody: false
+});
+
 // Proxy route rules
-app.use('/api/cakes', proxy(CATALOG_SERVICE_URL, {
-  proxyReqPathResolver: (req) => '/cakes' + req.url
-}));
-
-app.use('/api/baskets', proxy(ORDER_SERVICE_URL, {
-  proxyReqPathResolver: (req) => '/baskets' + req.url
-}));
-
-app.use('/api/orders', proxy(ORDER_SERVICE_URL, {
-  proxyReqPathResolver: (req) => '/orders' + req.url
-}));
-
-app.use('/api/ratings', proxy(RATING_SERVICE_URL, {
-  proxyReqPathResolver: (req) => '/ratings' + req.url
-}));
-
-app.use('/api/notifications', proxy(NOTIFICATION_SERVICE_URL, {
-  proxyReqPathResolver: (req) => '/notifications' + req.url
-}));
+app.use('/api/cakes', proxy(CATALOG_SERVICE_URL, proxyOptions('/cakes')));
+app.use('/api/baskets', proxy(ORDER_SERVICE_URL, proxyOptions('/baskets')));
+app.use('/api/orders', proxy(ORDER_SERVICE_URL, proxyOptions('/orders')));
+app.use('/api/ratings', proxy(RATING_SERVICE_URL, proxyOptions('/ratings')));
+app.use('/api/notifications', proxy(NOTIFICATION_SERVICE_URL, proxyOptions('/notifications')));
 
 // Serve static frontend files from public directory
 const publicPath = path.join(__dirname, 'public');
@@ -62,14 +57,7 @@ app.get('*', (req, res, next) => {
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('API Gateway Proxy Error:', err.message);
-  res.status(502).json({
-    success: false,
-    message: 'Bad Gateway: Microservice communication failed or service is offline',
-    error: err.message
-  });
-});
+app.use(errorMiddleware);
 
 app.listen(PORT, () => {
   console.log(`=================================`);

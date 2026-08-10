@@ -1,5 +1,5 @@
 const amqp = require('amqplib');
-const Notification = require('./models/Notification');
+const notificationService = require('./services/notificationService');
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://localhost';
 const EXCHANGE_NAME = 'cake-events';
@@ -24,27 +24,7 @@ const startConsumer = async () => {
         const eventData = JSON.parse(msg.content.toString());
         console.log(`Received RabbitMQ Event: ${eventData.eventType || 'OrderCompleted'} (ID: ${eventData.eventId})`);
 
-        const { eventId, orderId, userId, message } = eventData;
-
-        // Prevent duplicate processing using eventId
-        const existingNotification = await Notification.findOne({ eventId });
-        if (existingNotification) {
-          console.log(`Duplicate event detected (eventId: ${eventId}). Skipping notification creation.`);
-          channel.ack(msg);
-          return;
-        }
-
-        // Save new notification to MongoDB
-        const notification = await Notification.create({
-          eventId,
-          orderId,
-          userId,
-          message: message || `Your order ${orderId} has been confirmed.`,
-          type: 'IN_APP',
-          status: 'SENT'
-        });
-
-        console.log(`Order confirmation sent to ${userId} (Notification ID: ${notification._id})`);
+        await notificationService.handleOrderCompletedEvent(eventData);
         channel.ack(msg);
       } catch (err) {
         console.error('Error processing notification event:', err.message);
