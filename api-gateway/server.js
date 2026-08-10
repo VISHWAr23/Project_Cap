@@ -19,8 +19,8 @@ const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http:/
 app.use(cors());
 app.use(requestLogger);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
+// Health check endpoint (handles direct /health and proxied /api/health)
+app.get(['/health', '/api/health'], (req, res) => {
   res.status(200).json({
     status: 'UP',
     service: 'api-gateway'

@@ -80,62 +80,145 @@
 
         <!-- ADMIN VIEW -->
         <div id="adminView" style="display:none;">
-          <!-- Cake Form (Add / Edit) -->
-          <section class="card" style="margin-bottom:0.8rem;">
-            <h4 id="adminFormTitle">🛠️ Add New Cake</h4>
-            <form id="adminCakeForm" class="filter-form" style="display:flex; flex-direction:column; gap:0.5rem;">
-              <input type="hidden" id="adminCakeId">
+          <!-- Admin Sub-Navigation Tabs Bar -->
+          <div class="admin-nav-tabs">
+            <button class="admin-tab-btn active" data-tab="overview">📊 Overview</button>
+            <button class="admin-tab-btn" data-tab="catalog">🍰 Catalog</button>
+            <button class="admin-tab-btn" data-tab="orders">📦 Orders</button>
+            <button class="admin-tab-btn" data-tab="ratings">⭐ Ratings</button>
+            <button class="admin-tab-btn" data-tab="health">🟢 Health</button>
+          </div>
+
+          <!-- TAB 1: OVERVIEW DASHBOARD -->
+          <div id="adminTabOverview" class="admin-tab-content">
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-title">Catalog Items</div>
+                <div class="kpi-value" id="kpiTotalCakes">0</div>
+                <div class="kpi-sub" id="kpiStockRatio">0 In Stock</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Total Orders</div>
+                <div class="kpi-value" id="kpiTotalOrders">0</div>
+                <div class="kpi-sub" id="kpiRevenue">Total Revenue: $0</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Platform Rating</div>
+                <div class="kpi-value" id="kpiAvgRating">⭐ 0.0</div>
+                <div class="kpi-sub">Across catalog items</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">System Status</div>
+                <div class="kpi-value" id="kpiSystemStatus" style="color:var(--success); font-size:1rem;">ONLINE</div>
+                <div class="kpi-sub">5 Microservices Healthy</div>
+              </div>
+            </div>
+
+            <section class="card" style="margin-top:0.8rem;">
+              <h4>⚡ Quick Actions</h4>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn btn-primary btn-sm" onclick="switchAdminTab('catalog')">➕ Add New Cake</button>
+                <button class="btn btn-secondary btn-sm" onclick="switchAdminTab('orders')">🔍 Inspect Orders</button>
+                <button class="btn btn-secondary btn-sm" onclick="switchAdminTab('ratings')">⭐ View Customer Reviews</button>
+                <button class="btn btn-success btn-sm" onclick="switchAdminTab('health')">🟢 Check Services Health</button>
+              </div>
+            </section>
+          </div>
+
+          <!-- TAB 2: CATALOG MANAGEMENT -->
+          <div id="adminTabCatalog" class="admin-tab-content" style="display:none;">
+            <!-- Manage Catalog List Header -->
+            <section class="card">
+              <div class="card-header">
+                <h4>Manage Catalog Items (Catalog Service)</h4>
+                <button id="openAddCakeModalBtn" class="btn btn-success btn-sm">➕ Add New Cake Item</button>
+              </div>
+              <div id="adminCakesList" class="cakes-grid">
+                <div class="loading">Loading catalog for admin...</div>
+              </div>
+            </section>
+          </div>
+
+          <!-- TAB 3: ORDERS MANAGEMENT & INSPECTOR -->
+          <div id="adminTabOrders" class="admin-tab-content" style="display:none;">
+            <!-- Order Lookup Inspector -->
+            <section class="card" style="margin-bottom:0.8rem;">
+              <h4>Order Lookup Inspector</h4>
               <div style="display:flex; gap:0.4rem;">
-                <input type="text" id="adminCakeName" placeholder="Cake Name" required style="flex:2;">
-                <select id="adminCakeCategory" required style="flex:1;">
-                  <option value="Chocolate">Chocolate</option>
-                  <option value="Birthday">Birthday</option>
-                  <option value="Fruit">Fruit</option>
-                  <option value="Specialty">Specialty</option>
-                </select>
+                <input type="text" id="adminOrderIdInput" placeholder="Enter Order ID..." style="flex:1;">
+                <button id="adminInspectOrderBtn" class="btn btn-primary btn-sm">Inspect Order Payload</button>
               </div>
-              <div style="display:flex; gap:0.4rem; align-items:center;">
-                <input type="number" id="adminCakePrice" placeholder="Price $" min="1" required style="flex:1;">
-                <select id="adminCakeAvailability" style="flex:1;">
-                  <option value="true">In Stock (Available)</option>
-                  <option value="false">Out of Stock</option>
-                </select>
-                <button type="submit" id="adminSaveCakeBtn" class="btn btn-success btn-sm">Save Cake</button>
-                <button type="button" id="adminCancelEditBtn" class="btn btn-outline btn-sm" style="display:none;">Cancel</button>
+            </section>
+
+            <!-- All Orders List -->
+            <section class="card">
+              <div class="card-header">
+                <h4>All Placed Orders (Order Service)</h4>
+                <button id="refreshAdminOrdersBtn" class="btn btn-outline btn-sm">🔄 Refresh</button>
               </div>
-            </form>
-          </section>
+              <div id="adminOrdersList" class="orders-list">
+                <p class="empty-text">Loading orders...</p>
+              </div>
+            </section>
+          </div>
 
-          <!-- Manage Catalog List -->
-          <section class="card" style="margin-bottom:0.8rem;">
-            <h4>Manage Catalog</h4>
-            <div id="adminCakesList" class="cakes-grid">
-              <div class="loading">Loading catalog for admin...</div>
-            </div>
-          </section>
+          <!-- TAB 4: RATING & REVIEWS ANALYTICS -->
+          <div id="adminTabRatings" class="admin-tab-content" style="display:none;">
+            <section class="card">
+              <div class="card-header">
+                <h4>Cake Reviews & Rating Analysis</h4>
+                <button id="refreshAdminRatingsBtn" class="btn btn-outline btn-sm">🔄 Refresh All Reviews</button>
+              </div>
+              <div style="display:flex; gap:0.4rem; margin-bottom:0.5rem;">
+                <select id="adminRatingCakeSelect" style="flex:1;">
+                  <option value="">All Cakes (Show All Reviews)</option>
+                </select>
+                <button id="adminInspectRatingsBtn" class="btn btn-primary btn-sm">Filter Reviews</button>
+              </div>
+              <div id="adminRatingsContainer">
+                <p class="empty-text">Select a cake above to inspect customer review history.</p>
+              </div>
+            </section>
+          </div>
 
-          <!-- Order Lookup Inspector -->
-          <section class="card" style="margin-bottom:0.8rem;">
-            <h4>Order Lookup Inspector</h4>
-            <div style="display:flex; gap:0.4rem;">
-              <input type="text" id="adminOrderIdInput" placeholder="Enter Order ID..." style="flex:1;">
-              <button id="adminInspectOrderBtn" class="btn btn-primary btn-sm">Inspect Order</button>
-            </div>
-          </section>
+          <!-- TAB 5: SYSTEM HEALTH & NOTIFICATIONS -->
+          <div id="adminTabHealth" class="admin-tab-content" style="display:none;">
+            <section class="card" style="margin-bottom:0.8rem;">
+              <div class="card-header">
+                <h4>Microservices Live Health Probes</h4>
+                <button id="checkHealthBtn" class="btn btn-primary btn-sm">Check All Health</button>
+              </div>
+              <div id="healthStatusGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:0.5rem;">
+                <div class="health-card">
+                  <div style="font-size:0.75rem; color:var(--text-muted);">API Gateway</div>
+                  <div id="healthGateway" style="font-weight:600; color:var(--success);">UNKNOWN</div>
+                </div>
+                <div class="health-card">
+                  <div style="font-size:0.75rem; color:var(--text-muted);">Catalog Service</div>
+                  <div id="healthCatalog" style="font-weight:600; color:var(--success);">UNKNOWN</div>
+                </div>
+                <div class="health-card">
+                  <div style="font-size:0.75rem; color:var(--text-muted);">Order Service</div>
+                  <div id="healthOrder" style="font-weight:600; color:var(--success);">UNKNOWN</div>
+                </div>
+                <div class="health-card">
+                  <div style="font-size:0.75rem; color:var(--text-muted);">Rating Service</div>
+                  <div id="healthRating" style="font-weight:600; color:var(--success);">UNKNOWN</div>
+                </div>
+                <div class="health-card">
+                  <div style="font-size:0.75rem; color:var(--text-muted);">Notification Service</div>
+                  <div id="healthNotification" style="font-weight:600; color:var(--success);">UNKNOWN</div>
+                </div>
+              </div>
+            </section>
 
-          <!-- Cake Reviews Inspector -->
-          <section class="card">
-            <h4>Cake Reviews & Rating Analysis</h4>
-            <div style="display:flex; gap:0.4rem; margin-bottom:0.5rem;">
-              <select id="adminRatingCakeSelect" style="flex:1;">
-                <option value="">Select a Cake to View Reviews</option>
-              </select>
-              <button id="adminInspectRatingsBtn" class="btn btn-primary btn-sm">Load Reviews</button>
-            </div>
-            <div id="adminRatingsContainer">
-              <p class="empty-text">Select a cake above to inspect customer review history.</p>
-            </div>
-          </section>
+            <section class="card">
+              <h4>System Notifications Log</h4>
+              <div id="adminSystemNotifsList" class="orders-list">
+                <p class="empty-text">No system notifications loaded.</p>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
     </div>
@@ -227,6 +310,64 @@
             <textarea id="ratingReview" rows="2" placeholder="Write feedback..."></textarea>
           </div>
           <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Rating</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create / Edit Cake Modal -->
+  <div id="cakeModal" class="modal">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 id="cakeModalTitle">🛠️ Add New Cake Item</h3>
+        <span class="close-modal" id="closeCakeModal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="adminCakeForm" style="display:flex; flex-direction:column; gap:0.6rem;">
+          <input type="hidden" id="adminCakeId">
+
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">Cake Name *</label>
+            <input type="text" id="adminCakeName" placeholder="e.g. Belgian Dark Chocolate Fudge Cake" required style="width:100%;">
+          </div>
+
+          <div style="display:flex; gap:0.5rem;">
+            <div style="flex:1;">
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">Category *</label>
+              <select id="adminCakeCategory" required style="width:100%;">
+                <option value="Chocolate">Chocolate</option>
+                <option value="Birthday">Birthday</option>
+                <option value="Fruit">Fruit</option>
+                <option value="Specialty">Specialty</option>
+              </select>
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">Price ($) *</label>
+              <input type="number" id="adminCakePrice" placeholder="e.g. 450" min="1" required style="width:100%;">
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">Stock Status</label>
+              <select id="adminCakeAvailability" style="width:100%;">
+                <option value="true">In Stock</option>
+                <option value="false">Out of Stock</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">Detailed Description</label>
+            <textarea id="adminCakeDescription" placeholder="Enter detailed description of ingredients, cake layers, and frosting..." rows="3" style="width:100%; resize:vertical;"></textarea>
+          </div>
+
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">Image URL</label>
+            <input type="url" id="adminCakeImageUrl" placeholder="https://images.unsplash.com/..." style="width:100%;">
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:0.6rem;">
+            <button type="button" id="adminCancelCakeBtn" class="btn btn-outline btn-sm">Cancel</button>
+            <button type="submit" id="adminSaveCakeBtn" class="btn btn-success btn-sm">Save Cake</button>
+          </div>
         </form>
       </div>
     </div>

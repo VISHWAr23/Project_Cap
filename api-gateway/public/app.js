@@ -495,7 +495,212 @@ const adminRatingCakeSelect = document.getElementById('adminRatingCakeSelect');
 const adminInspectRatingsBtn = document.getElementById('adminInspectRatingsBtn');
 const adminRatingsContainer = document.getElementById('adminRatingsContainer');
 
-// Mode Toggle Handler
+const adminOrdersList = document.getElementById('adminOrdersList');
+const refreshAdminOrdersBtn = document.getElementById('refreshAdminOrdersBtn');
+const checkHealthBtn = document.getElementById('checkHealthBtn');
+const adminSystemNotifsList = document.getElementById('adminSystemNotifsList');
+
+// Admin Tab Switching System
+function switchAdminTab(tabName) {
+  const tabs = ['overview', 'catalog', 'orders', 'ratings', 'health'];
+  tabs.forEach(t => {
+    const contentEl = document.getElementById(`adminTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    const btnEl = document.querySelector(`.admin-tab-btn[data-tab="${t}"]`);
+    if (contentEl) contentEl.style.display = t === tabName ? 'block' : 'none';
+    if (btnEl) btnEl.classList.toggle('active', t === tabName);
+  });
+
+  if (tabName === 'overview') updateAdminKPIs();
+  if (tabName === 'catalog') loadAdminCakes();
+  if (tabName === 'orders') loadAdminOrders();
+  if (tabName === 'ratings') {
+    loadAdminCakes();
+    loadAllAdminRatings();
+  }
+  if (tabName === 'health') {
+    checkMicroserviceHealth();
+    loadAdminNotifications();
+  }
+}
+
+// Tab Button Click Event Listeners
+document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const tab = e.target.getAttribute('data-tab');
+    if (tab) switchAdminTab(tab);
+  });
+});
+
+// Calculate Admin Overview KPIs
+async function updateAdminKPIs() {
+  const cakesRes = await apiCall('/cakes');
+  if (cakesRes.data && cakesRes.data.success) {
+    const cakes = cakesRes.data.data;
+    const totalCakes = cakes.length;
+    const inStock = cakes.filter(c => c.availability).length;
+    const avgRatingSum = cakes.reduce((acc, c) => acc + (c.averageRating || 0), 0);
+    const avgRating = totalCakes > 0 ? (avgRatingSum / totalCakes).toFixed(1) : '0.0';
+
+    document.getElementById('kpiTotalCakes').textContent = totalCakes;
+    document.getElementById('kpiStockRatio').textContent = `${inStock} / ${totalCakes} In Stock`;
+    document.getElementById('kpiAvgRating').textContent = `⭐ ${avgRating}`;
+  }
+
+  const ordersRes = await apiCall('/orders');
+  if (ordersRes.data && ordersRes.data.success) {
+    const orders = ordersRes.data.data;
+    const totalOrders = orders.length;
+    const revenue = orders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
+
+    document.getElementById('kpiTotalOrders').textContent = totalOrders;
+    document.getElementById('kpiRevenue').textContent = `Total Revenue: $${revenue}`;
+  }
+}
+
+// Load All Orders in Admin View
+async function loadAdminOrders() {
+  if (!adminOrdersList) return;
+  adminOrdersList.innerHTML = '<div class="loading">Loading orders for admin...</div>';
+  const res = await apiCall('/orders');
+
+  if (!res.data || !res.data.success || !res.data.data || res.data.data.length === 0) {
+    adminOrdersList.innerHTML = '<p class="empty-text">No orders found in database.</p>';
+    return;
+  }
+
+  adminOrdersList.innerHTML = '';
+  res.data.data.forEach(order => {
+    const box = document.createElement('div');
+    box.className = 'order-box';
+    box.style.marginBottom = '0.4rem';
+    box.innerHTML = `
+      <div class="order-header">
+        <strong>Order #${order._id}</strong>
+        <span class="status-badge status-success">${order.status || 'CONFIRMED'}</span>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.2rem;">
+        User: ${order.userId} • Items: ${order.items ? order.items.length : 0} • Total: <strong>$${order.totalAmount}</strong>
+      </div>
+      <div style="margin-top:0.3rem; display:flex; justify-content:flex-end;">
+        <button class="btn btn-primary btn-sm" onclick="inspectSpecificOrder('${order._id}')">Inspect 🔍</button>
+      </div>
+    `;
+    adminOrdersList.appendChild(box);
+  });
+}
+
+function inspectSpecificOrder(orderId) {
+  adminOrderIdInput.value = orderId;
+  adminInspectOrderBtn.click();
+}
+
+if (refreshAdminOrdersBtn) {
+  refreshAdminOrdersBtn.addEventListener('click', loadAdminOrders);
+}
+
+// Microservice Health Check Probes
+async function checkMicroserviceHealth() {
+  const setStatus = (id, isOk) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = isOk ? 'UP 🟢' : 'DOWN 🔴';
+      el.style.color = isOk ? 'var(--success)' : 'var(--danger)';
+    }
+  };
+
+  const gwRes = await apiCall('/health');
+  setStatus('healthGateway', gwRes.ok);
+
+  const catRes = await apiCall('/cakes/health');
+  setStatus('healthCatalog', catRes.ok);
+
+  const ordRes = await apiCall('/orders/health');
+  setStatus('healthOrder', ordRes.ok);
+
+  const ratRes = await apiCall('/ratings/health');
+  setStatus('healthRating', ratRes.ok);
+
+  const notRes = await apiCall('/notifications/health');
+  setStatus('healthNotification', notRes.ok);
+}
+
+if (checkHealthBtn) {
+  checkHealthBtn.addEventListener('click', checkMicroserviceHealth);
+}
+
+// Load System Notifications in Admin Tab
+async function loadAdminNotifications() {
+  if (!adminSystemNotifsList) return;
+  adminSystemNotifsList.innerHTML = '<div class="loading">Loading system notifications...</div>';
+  const res = await apiCall('/notifications');
+
+  if (!res.data || !res.data.success || !res.data.data || res.data.data.length === 0) {
+    adminSystemNotifsList.innerHTML = '<p class="empty-text">No system notifications found.</p>';
+    return;
+  }
+
+  adminSystemNotifsList.innerHTML = '';
+  res.data.data.forEach(n => {
+    const box = document.createElement('div');
+    box.className = 'order-box';
+    box.style.marginBottom = '0.3rem';
+    box.innerHTML = `
+      <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+        <strong>[${n.type || 'SYSTEM'}] Event: ${n.eventId || 'N/A'}</strong>
+        <span style="color:var(--text-muted);">${new Date(n.createdAt).toLocaleTimeString()}</span>
+      </div>
+      <div style="font-size:0.78rem; margin-top:0.2rem; color:var(--text-main);">${n.message}</div>
+    `;
+    adminSystemNotifsList.appendChild(box);
+  });
+}
+
+// DOM Elements for Cake Modal
+const cakeModal = document.getElementById('cakeModal');
+const closeCakeModal = document.getElementById('closeCakeModal');
+const openAddCakeModalBtn = document.getElementById('openAddCakeModalBtn');
+const adminCakeDescription = document.getElementById('adminCakeDescription');
+const adminCakeImageUrl = document.getElementById('adminCakeImageUrl');
+const cakeModalTitle = document.getElementById('cakeModalTitle');
+const adminCancelCakeBtn = document.getElementById('adminCancelCakeBtn');
+
+// Modal Helper Functions
+function openCakeModal(cake = null) {
+  if (!cakeModal) return;
+  if (cake) {
+    cakeModalTitle.textContent = `✏️ Edit Cake: ${cake.name}`;
+    adminCakeId.value = cake._id;
+    adminCakeName.value = cake.name || '';
+    adminCakeCategory.value = cake.category || 'Chocolate';
+    adminCakePrice.value = cake.price || '';
+    adminCakeAvailability.value = (cake.availability !== undefined ? cake.availability : true).toString();
+    adminCakeDescription.value = cake.description || '';
+    adminCakeImageUrl.value = cake.imageUrl || '';
+    adminSaveCakeBtn.textContent = 'Update Cake';
+  } else {
+    cakeModalTitle.textContent = '🛠️ Add New Cake Item';
+    adminCakeId.value = '';
+    adminCakeForm.reset();
+    adminSaveCakeBtn.textContent = 'Save Cake';
+  }
+  cakeModal.classList.add('active');
+}
+
+function closeCakeModalFn() {
+  if (cakeModal) cakeModal.classList.remove('active');
+}
+
+if (openAddCakeModalBtn) {
+  openAddCakeModalBtn.addEventListener('click', () => openCakeModal());
+}
+if (closeCakeModal) {
+  closeCakeModal.addEventListener('click', closeCakeModalFn);
+}
+if (adminCancelCakeBtn) {
+  adminCancelCakeBtn.addEventListener('click', closeCakeModalFn);
+}
+
+// Mode Toggle Handler (Hides Cart & Notification buttons when in Admin mode)
 modeToggleBtn.addEventListener('click', () => {
   if (currentMode === 'customer') {
     currentMode = 'admin';
@@ -506,7 +711,12 @@ modeToggleBtn.addEventListener('click', () => {
     modeToggleBtn.textContent = '👤 Switch to Customer';
     modeToggleBtn.style.background = '#0284c7';
     modeToggleBtn.style.borderColor = '#0284c7';
-    loadAdminCakes();
+    
+    // Hide Cart & Notifications buttons in Admin view
+    cartBtn.style.display = 'none';
+    notifBtn.style.display = 'none';
+
+    switchAdminTab('overview');
   } else {
     currentMode = 'customer';
     customerView.style.display = 'block';
@@ -516,12 +726,18 @@ modeToggleBtn.addEventListener('click', () => {
     modeToggleBtn.textContent = '🛠️ Switch to Admin';
     modeToggleBtn.style.background = '#7c3aed';
     modeToggleBtn.style.borderColor = '#6d28d9';
+    
+    // Show Cart & Notifications buttons in Customer view
+    cartBtn.style.display = 'inline-block';
+    notifBtn.style.display = 'inline-block';
+
     loadCakes();
   }
 });
 
 // Load Admin Catalog
 async function loadAdminCakes() {
+  if (!adminCakesList) return;
   adminCakesList.innerHTML = '<div class="loading">Loading catalog for admin...</div>';
   const res = await apiCall('/cakes');
 
@@ -532,14 +748,20 @@ async function loadAdminCakes() {
 
   const cakes = res.data.data;
   adminCakesList.innerHTML = '';
-  adminRatingCakeSelect.innerHTML = '<option value="">Select a Cake to View Reviews</option>';
+  if (adminRatingCakeSelect) {
+    adminRatingCakeSelect.innerHTML = '<option value="">All Cakes (Show All Reviews)</option>';
+  }
 
   cakes.forEach(cake => {
+    cakesMap[cake._id] = cake;
+
     // Populate Rating Select options
-    const opt = document.createElement('option');
-    opt.value = cake._id;
-    opt.textContent = `${cake.name} (${cake.category})`;
-    adminRatingCakeSelect.appendChild(opt);
+    if (adminRatingCakeSelect) {
+      const opt = document.createElement('option');
+      opt.value = cake._id;
+      opt.textContent = `${cake.name} (${cake.category})`;
+      adminRatingCakeSelect.appendChild(opt);
+    }
 
     const isStock = cake.availability;
     const img = cake.imageUrl || DEFAULT_CAKE_IMG;
@@ -553,7 +775,7 @@ async function loadAdminCakes() {
         <div class="cake-meta">${cake.category} • $${cake.price}</div>
         <div class="cake-meta">Status: <strong style="color:${isStock ? 'var(--success)' : 'var(--danger)'};">${isStock ? 'In Stock' : 'Out of Stock'}</strong></div>
         <div class="cake-price-row" style="margin-top:0.4rem;">
-          <button class="btn btn-outline btn-sm" onclick="editCakeForm('${cake._id}', '${cake.name.replace(/'/g, "\\'")}', '${cake.category}', ${cake.price}, ${cake.availability})">Edit ✏️</button>
+          <button class="btn btn-outline btn-sm" onclick="editCakeById('${cake._id}')">Edit ✏️</button>
           <button class="btn btn-danger btn-sm" onclick="deleteAdminCake('${cake._id}')">Delete 🗑️</button>
         </div>
       </div>
@@ -562,30 +784,12 @@ async function loadAdminCakes() {
   });
 }
 
-// Edit Cake Form Populate
-function editCakeForm(id, name, category, price, availability) {
-  adminCakeId.value = id;
-  adminCakeName.value = name;
-  adminCakeCategory.value = category;
-  adminCakePrice.value = price;
-  adminCakeAvailability.value = availability.toString();
-
-  adminFormTitle.textContent = `✏️ Edit Cake: ${name}`;
-  adminSaveCakeBtn.textContent = 'Update Cake';
-  adminCancelEditBtn.style.display = 'inline-block';
+function editCakeById(cakeId) {
+  const cake = cakesMap[cakeId];
+  if (cake) openCakeModal(cake);
 }
 
-// Reset Admin Cake Form
-function resetAdminForm() {
-  adminCakeId.value = '';
-  adminCakeForm.reset();
-  adminFormTitle.textContent = '🛠️ Add New Cake';
-  adminSaveCakeBtn.textContent = 'Save Cake';
-  adminCancelEditBtn.style.display = 'none';
-}
-adminCancelEditBtn.addEventListener('click', resetAdminForm);
-
-// Add / Update Cake Submit Handler
+// Add / Update Cake Submit Handler (Supports all schema fields: name, category, price, availability, description, imageUrl)
 adminCakeForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const id = adminCakeId.value;
@@ -593,6 +797,10 @@ adminCakeForm.addEventListener('submit', async (e) => {
   const category = adminCakeCategory.value;
   const price = Number(adminCakePrice.value);
   const availability = adminCakeAvailability.value === 'true';
+  const description = adminCakeDescription.value.trim();
+  const imageUrl = adminCakeImageUrl.value.trim();
+
+  const payload = { name, category, price, availability, description, imageUrl };
 
   let res;
   if (id) {
@@ -600,20 +808,20 @@ adminCakeForm.addEventListener('submit', async (e) => {
     res = await apiCall(`/cakes/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, category, price, availability })
+      body: JSON.stringify(payload)
     });
   } else {
     // POST /api/cakes
     res = await apiCall('/cakes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, category, price, availability })
+      body: JSON.stringify(payload)
     });
   }
 
   if (res.data && res.data.success) {
     showToast(id ? 'Cake updated successfully!' : 'New cake added to catalog!', 'success');
-    resetAdminForm();
+    closeCakeModalFn();
     loadAdminCakes();
   } else {
     showToast(res.data?.message || 'Failed to save cake', 'danger');
@@ -648,45 +856,60 @@ adminInspectOrderBtn.addEventListener('click', async () => {
   }
 });
 
-// Admin Cake Reviews Inspector Handler (GET /api/ratings/cake/:cakeId)
-adminInspectRatingsBtn.addEventListener('click', async () => {
-  const cakeId = adminRatingCakeSelect.value;
-  if (!cakeId) {
-    showToast('Please select a cake from the dropdown', 'danger');
-    return;
-  }
-
+// Admin Cake Reviews Inspector Handler (GET /api/ratings or GET /api/ratings/cake/:cakeId)
+async function loadAllAdminRatings(selectedCakeId = '') {
+  if (!adminRatingsContainer) return;
   adminRatingsContainer.innerHTML = '<div class="loading">Loading ratings & reviews...</div>';
 
-  // Call GET /api/ratings/cake/:cakeId
-  const res = await apiCall(`/ratings/cake/${cakeId}`);
+  const endpoint = selectedCakeId ? `/ratings/cake/${selectedCakeId}` : '/ratings';
+  const res = await apiCall(endpoint);
 
   if (!res.data || !res.data.success || !res.data.data) {
-    adminRatingsContainer.innerHTML = '<p class="empty-text">No reviews found for this cake.</p>';
+    adminRatingsContainer.innerHTML = '<p class="empty-text">Failed to load reviews.</p>';
     return;
   }
 
   const ratings = res.data.data;
   if (ratings.length === 0) {
-    adminRatingsContainer.innerHTML = '<p class="empty-text">No customer reviews submitted for this cake yet.</p>';
+    adminRatingsContainer.innerHTML = '<p class="empty-text">No customer reviews submitted yet.</p>';
     return;
   }
 
   adminRatingsContainer.innerHTML = '';
   ratings.forEach(r => {
+    const cakeObj = cakesMap[r.cakeId];
+    const cakeName = cakeObj ? cakeObj.name : `Cake ID: ${r.cakeId}`;
+
     const box = document.createElement('div');
     box.className = 'order-box';
-    box.style.marginBottom = '0.35rem';
+    box.style.marginBottom = '0.4rem';
     box.innerHTML = `
-      <div style="display:flex; justify-content:space-between;">
-        <strong>Score: ${r.rating} ⭐</strong>
-        <span style="color:var(--text-muted); font-size:0.72rem;">User: ${r.userId}</span>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong style="color:var(--accent); font-size:0.82rem;">${cakeName}</strong>
+        <span style="font-weight:600; color:#eab308; font-size:0.82rem;">${r.rating} ⭐</span>
       </div>
-      <div style="margin-top:0.2rem; color:var(--text-main); font-style:italic;">"${r.review || 'No written feedback'}"</div>
+      <div style="margin-top:0.25rem; color:var(--text-main); font-style:italic;">"${r.review || 'No written feedback'}"</div>
+      <div style="margin-top:0.35rem; font-size:0.72rem; color:var(--text-muted); display:flex; justify-content:space-between; border-top:1px dashed var(--card-border); padding-top:0.25rem;">
+        <span>User: <strong>${r.userId}</strong> ${r.orderId ? `• Order: #${r.orderId}` : ''}</span>
+        <span>${r.createdAt ? new Date(r.createdAt).toLocaleTimeString() : ''}</span>
+      </div>
     `;
     adminRatingsContainer.appendChild(box);
   });
+}
+
+adminInspectRatingsBtn.addEventListener('click', () => {
+  const cakeId = adminRatingCakeSelect.value;
+  loadAllAdminRatings(cakeId);
 });
+
+const refreshAdminRatingsBtn = document.getElementById('refreshAdminRatingsBtn');
+if (refreshAdminRatingsBtn) {
+  refreshAdminRatingsBtn.addEventListener('click', () => {
+    adminRatingCakeSelect.value = '';
+    loadAllAdminRatings();
+  });
+}
 
 // Initial Calls
 initBasket();

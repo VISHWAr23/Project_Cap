@@ -41,6 +41,10 @@ class RatingService {
     return newRating;
   }
 
+  async getAllRatings() {
+    return await Rating.find().sort({ createdAt: -1 });
+  }
+
   async getCakeRatings(cakeId) {
     return await Rating.find({ cakeId }).sort({ createdAt: -1 });
   }

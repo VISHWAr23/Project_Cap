@@ -11,6 +11,17 @@ exports.createRating = async (req, res, next) => {
   }
 };
 
+// Get all ratings
+exports.getAllRatings = async (req, res, next) => {
+  try {
+    const ratings = await ratingService.getAllRatings();
+    return res.status(200).json({ success: true, count: ratings.length, data: ratings });
+  } catch (error) {
+    console.error('Error fetching all ratings:', error.message);
+    return res.status(500).json({ success: false, message: 'Server error fetching all ratings' });
+  }
+};
+
 // Get ratings for a specific cake
 exports.getCakeRatings = async (req, res, next) => {
   try {
