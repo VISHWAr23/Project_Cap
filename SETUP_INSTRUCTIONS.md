@@ -26,18 +26,11 @@ Run the following command from the root directory:
 docker compose up --build
 ```
 
-To run in detached background mode:
-
-```bash
-docker compose up -d --build
-```
-
 ### 2. Application Endpoint Access
 
 Once containers are active, access the API Gateway & User Interface at:
 
-- **Primary Gateway URL**: [http://localhost:3000](http://localhost:3000)
-- **Fallback Gateway URL**: [http://localhost:8080](http://localhost:8080)
+- **Gateway URL**: [http://localhost:3000](http://localhost:3000)
 
 ### 3. Service Termination
 
