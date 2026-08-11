@@ -1,5 +1,10 @@
 # Cake Delight - Microservices Platform
 
+> **GitHub Repository**: [https://github.com/VISHWAr23/Project_Cap](https://github.com/VISHWAr23/Project_Cap)  
+> *For the best reading experience with fully rendered diagrams, images, and interactive navigation, please view this README directly on GitHub.*
+
+---
+
 ## Overview
 
 Cake Delight is a lightweight Node.js microservices platform architected with an API Gateway, an event-driven RabbitMQ message broker, and isolated MongoDB databases following the Database-per-Service pattern.
