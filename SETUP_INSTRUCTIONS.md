@@ -1,103 +1,123 @@
-# 🛠️ Setup and Execution Instructions
+# Setup and Execution Instructions
 
-This document provides simple, step-by-step instructions to set up and run the **Cake Delight Microservices Application**.
-
----
-
-## 📋 Prerequisites
-
-Before running the application, ensure you have the following installed on your machine:
-
-1. **Docker Desktop** (with Docker Compose)
-   - Download: [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
-2. **Git** (to clone/manage the repository)
-3. *(Optional)* **Minikube & Kubectl** (if deploying to Kubernetes)
+This document provides developer-level setup, configuration, and execution instructions for the Cake Delight microservices platform.
 
 ---
 
-## 🚀 Option 1: Run with Docker Compose (Recommended)
+## Prerequisites
 
-Running with Docker Compose starts all 5 microservices, 4 MongoDB databases, and 1 RabbitMQ event broker in isolated containers automatically.
+Ensure the following tools are installed on your host system:
 
-### Step 1: Open Terminal
-Open your command prompt or terminal in the project directory:
-```bash
-cd Project_Cap
-```
+- **Docker Desktop** (v20.10+ with Docker Compose v2.0+)
+- **Git**
+- *(Optional)* **Minikube** & **kubectl** (for Kubernetes deployment verification)
 
-### Step 2: Build and Start Containers
-Run the following command to build and launch all services:
+---
+
+## Deployment Option 1: Docker Compose (Recommended)
+
+Docker Compose orchestrates all 5 microservices, 4 MongoDB instances, and the RabbitMQ message broker in isolated containers within a shared bridge network (`project_cap_default`).
+
+### 1. Build and Start Services
+
+Run the following command from the root directory:
+
 ```bash
 docker compose up --build
 ```
 
-### Step 3: Access the Application
-Once all containers show `Up` or `Started`, open your web browser and go to:
-- **Application URL**: [http://localhost:3000](http://localhost:3000) *(or http://localhost:8080)*
+To run in detached background mode:
 
-### Step 4: Stop the Application
-To stop all containers cleanly, press `Ctrl + C` in the terminal or run:
+```bash
+docker compose up -d --build
+```
+
+### 2. Application Endpoint Access
+
+Once containers are active, access the API Gateway & User Interface at:
+
+- **Primary Gateway URL**: [http://localhost:3000](http://localhost:3000)
+- **Fallback Gateway URL**: [http://localhost:8080](http://localhost:8080)
+
+### 3. Service Termination
+
+To stop all running containers and release bound network ports:
+
 ```bash
 docker compose down
 ```
 
+To remove containers, network bridges, and volumes:
+
+```bash
+docker compose down -v
+```
+
 ---
 
-## ☸️ Option 2: Run on Kubernetes (Minikube)
+## Deployment Option 2: Kubernetes (Minikube)
 
-If you want to deploy the application on a Kubernetes cluster:
+Manifests for Kubernetes objects (ConfigMaps, Deployments, Services) are located in the `k8s/` directory.
 
-### Step 1: Start Minikube
+### 1. Start Local Cluster
+
 ```bash
 minikube start
 ```
 
-### Step 2: Apply Kubernetes Configurations
-Apply all ConfigMaps, Deployments, and Services from the `k8s/` directory:
+### 2. Apply Manifests
+
 ```bash
 kubectl apply -f k8s/
 ```
 
-### Step 3: Verify Pods and Services
-Check that all pods are running:
+### 3. Verify Deployment Status
+
 ```bash
 kubectl get pods
+kubectl get services
 ```
 
-### Step 4: Open API Gateway in Browser
-Access the frontend API Gateway service:
+### 4. Expose API Gateway Service
+
 ```bash
 minikube service api-gateway
 ```
 
 ---
 
-## 📡 Microservices Ports & Infrastructure
+## Network & Port Allocation
 
-| Service Name | Type | Container Port | Host Port | Purpose |
+| Component | Architecture Role | Internal Port | Host Port | Database / Dependency |
 | :--- | :--- | :--- | :--- | :--- |
-| **API Gateway** | Express Gateway | `3000` | `3000` / `8080` | Frontend UI & API Router |
-| **Catalog Service** | Node.js Microservice | `3001` | `3001` | Manages cake catalog & stock |
-| **Order Service** | Node.js Microservice | `3002` | `3002` | Manages baskets & checkout orders |
-| **Rating Service** | Node.js Microservice | `3003` | `3003` | Manages ratings & review moderation |
-| **Notification Service** | Node.js Microservice | `3004` | `3004` | Event-driven notifications via RabbitMQ |
-| **Catalog Database** | MongoDB | `27017` | `27017` | Isolated storage for Catalog |
-| **Order Database** | MongoDB | `27017` | `27018` | Isolated storage for Orders & Baskets |
-| **Rating Database** | MongoDB | `27017` | `27019` | Isolated storage for Ratings |
-| **Notification Database** | MongoDB | `27017` | `27020` | Isolated storage for Notifications |
-| **Message Broker** | RabbitMQ | `5672` / `15672` | `5672` / `15672` | Asynchronous event broker |
+| **api-gateway** | Reverse Proxy & Static UI | `3000` | `3000` / `8080` | N/A |
+| **catalog-service** | Inventory Management REST API | `3001` | `3001` | `catalog-mongo` (`catalog_db`) |
+| **order-service** | Basket & Order Processing REST API | `3002` | `3002` | `order-mongo` (`order_db`), Catalog REST API, RabbitMQ |
+| **rating-service** | Rating & Review Moderation REST API | `3003` | `3003` | `rating-mongo` (`rating_db`), Catalog REST API |
+| **notification-service** | Asynchronous Event Consumer API | `3004` | `3004` | `notification-mongo` (`notification_db`), RabbitMQ Consumer |
+| **catalog-mongo** | Isolated Catalog Database | `27017` | `27017` | Persistent Volume `catalog_db_data` |
+| **order-mongo** | Isolated Order Database | `27017` | `27018` | Persistent Volume `order_db_data` |
+| **rating-mongo** | Isolated Rating Database | `27017` | `27019` | Persistent Volume `rating_db_data` |
+| **notification-mongo** | Isolated Notification Database | `27017` | `27020` | Persistent Volume `notification_db_data` |
+| **rabbitmq** | Event Broker & AMQP Exchange | `5672` / `15672` | `5672` / `15672` | AMQP Protocol & Web Management UI |
 
 ---
 
-## 🔍 Troubleshooting & Health Check
+## Service Health & Diagnostics
 
-- **Check Container Status**:
+- **Inspect Running Containers**:
   ```bash
   docker compose ps
   ```
-- **View Container Logs**:
+
+- **Inspect Service Logs**:
   ```bash
-  docker compose logs -f api-gateway
+  docker compose logs -f [service_name]
   ```
-- **Port Conflict Fix**:
-  If port 3000 is occupied by another application, access the UI on port `8080` at [http://localhost:8080](http://localhost:8080).
+
+- **Microservice Health Probes**:
+  Each microservice exposes a `/health` REST endpoint accessible via API Gateway:
+  - `GET http://localhost:3000/api/cakes/health`
+  - `GET http://localhost:3000/api/orders/health`
+  - `GET http://localhost:3000/api/ratings/health`
+  - `GET http://localhost:3000/api/notifications/health`

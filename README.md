@@ -4,6 +4,15 @@ A lightweight, production-ready Node.js microservices application built for tech
 
 ---
 
+## Assessment Documentation Guides
+
+For evaluator assessment review, refer to the following documentation guides:
+
+1. **[Setup and Execution Instructions](SETUP_INSTRUCTIONS.md)**: Prerequisites, Docker Compose deployment, Kubernetes manifests (`kubectl`), port allocation, and health check commands.
+2. **[End-to-End Demonstration Flow](END_TO_END_DEMO.md)**: Detailed technical walkthrough of Customer and Admin workflows, event-driven messaging, rating synchronization, and API Gateway inspection.
+
+---
+
 ## 1. Project Overview
 
 Cake Delight is architected as 4 independent domain microservices managed by an API Gateway and supported by asynchronous event messaging via RabbitMQ. Each microservice strictly owns its dedicated MongoDB database.
