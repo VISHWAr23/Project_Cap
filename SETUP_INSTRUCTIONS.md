@@ -1,9 +1,5 @@
 # Setup and Execution Instructions
 
-This document provides developer-level setup, configuration, and execution instructions for the Cake Delight microservices platform.
-
----
-
 ## Prerequisites
 
 Ensure the following tools are installed on your host system:
