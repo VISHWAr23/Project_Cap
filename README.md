@@ -13,6 +13,15 @@ The platform provides complete e-commerce capabilities, including catalog manage
 
 ---
 
+## Quick Navigation & Documentation Links
+
+For detailed deployment and demonstration flows, refer to the dedicated documentation files:
+
+- **[Setup & Execution Instructions](SETUP_INSTRUCTIONS.md)**: Comprehensive guide covering Docker Compose execution, Kubernetes manifests (`kubectl`), network port bindings, and microservice health checks.
+- **[End-to-End Application Flow Demonstration](END_TO_END_DEMO.md)**: Technical walkthrough of Customer and Admin workflows, event-driven messaging pipelines, and rating synchronization.
+
+---
+
 ## User Interface & 50/50 Split Panel Rationale
 
 ![Cake Delight Application Interface](docs/ui_preview.png)
@@ -29,15 +38,6 @@ The user interface is designed with a **50/50 dual-panel architecture** to provi
    - Provides instant visibility into internal microservice communication without requiring browser DevTools or console logs.
    - Displays the active HTTP Method (`GET`, `POST`, `PUT`, `DELETE`), target Endpoint URL, JSON Request Payload, and raw JSON Response Payload with HTTP Status Codes (`200 OK`, `201 Created`, etc.).
    - Maintains a chronological activity stream of all network calls triggered by UI interactions.
-
----
-
-## Quick Navigation & Documentation Links
-
-For detailed deployment and demonstration flows, refer to the dedicated documentation files:
-
-- **[Setup & Execution Instructions](SETUP_INSTRUCTIONS.md)**: Comprehensive guide covering Docker Compose execution, Kubernetes manifests (`kubectl`), network port bindings, and microservice health checks.
-- **[End-to-End Application Flow Demonstration](END_TO_END_DEMO.md)**: Technical walkthrough of Customer and Admin workflows, event-driven messaging pipelines, and rating synchronization.
 
 ---
 
