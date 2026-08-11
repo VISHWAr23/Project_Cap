@@ -14,68 +14,98 @@
     <div class="panel left-panel">
       <header class="app-header">
         <div class="logo">
-          <h2 id="headerTitle">Cake Delight UI</h2>
+          <h2 id="headerTitle">Cake Delight</h2>
+          <span id="roleBadge" class="mode-badge customer-mode">CUSTOMER MODE</span>
         </div>
         <div class="user-info">
-          <button id="modeToggleBtn" class="btn btn-secondary btn-sm" style="background:#7c3aed; border-color:#6d28d9;">🛠️ Switch to Admin</button>
+          <button id="modeToggleBtn" class="btn btn-warning btn-sm">🛡️ Switch to Admin</button>
           <span id="userBadge">User: <strong>user-123</strong></span>
-          <button id="cartBtn" class="btn btn-primary btn-sm">🛒 Cart (<span id="cartCount">0</span>)</button>
-          <button id="notifBtn" class="btn btn-secondary btn-sm">🔔 Notifs (<span id="notifCount">0</span>)</button>
         </div>
       </header>
 
       <div class="panel-content">
-        <!-- CUSTOMER VIEW -->
+        <!-- CUSTOMER VIEW WITH TABBED NAVIGATION -->
         <div id="customerView">
-          <!-- Catalog Filter -->
-          <section class="card" style="margin-bottom:0.8rem;">
-            <h4>Catalog Filter</h4>
-            <form id="filterForm" class="filter-form">
-              <input type="text" id="searchName" placeholder="Search cake name...">
-              <select id="searchCategory">
-                <option value="">All Categories</option>
-                <option value="Chocolate">Chocolate</option>
-                <option value="Birthday">Birthday</option>
-                <option value="Fruit">Fruit</option>
-                <option value="Specialty">Specialty</option>
-              </select>
-              <input type="number" id="minPrice" placeholder="Min $" min="0">
-              <input type="number" id="maxPrice" placeholder="Max $" min="0">
-              <button type="submit" class="btn btn-primary btn-sm">Filter</button>
-              <button type="button" id="resetFilterBtn" class="btn btn-outline btn-sm">Reset</button>
-            </form>
-          </section>
+          <!-- Customer Sub-Navigation Tabs Bar -->
+          <div class="customer-nav-tabs">
+            <button class="customer-tab-btn active" data-tab="catalog">🎂 Cakes Catalog</button>
+            <button class="customer-tab-btn" data-tab="cart">🛒 Shopping Basket (<span id="cartCount">0</span>)</button>
+            <button class="customer-tab-btn" data-tab="orders">📦 My Orders (<span id="ordersCount">0</span>)</button>
+            <button class="customer-tab-btn" data-tab="notifs">🔔 Notifications (<span id="notifCount">0</span>)</button>
+          </div>
 
-          <!-- Cake List -->
-          <section class="card" style="margin-bottom:0.8rem;">
-            <h4>Cakes Catalog</h4>
-            <div id="cakesGrid" class="cakes-list">
-              <div class="loading">Loading catalog...</div>
-            </div>
-          </section>
+          <!-- TAB 1: CAKES CATALOG VIEW -->
+          <div id="customerTabCatalog" class="customer-tab-content">
+            <!-- Catalog Filter -->
+            <section class="card" style="margin-bottom:0.8rem;">
+              <h4>Catalog Filter</h4>
+              <form id="filterForm" class="filter-form">
+                <input type="text" id="searchName" placeholder="Search cake name...">
+                <select id="searchCategory">
+                  <option value="">All Categories</option>
+                  <option value="Chocolate">Chocolate</option>
+                  <option value="Birthday">Birthday</option>
+                  <option value="Fruit">Fruit</option>
+                  <option value="Specialty">Specialty</option>
+                </select>
+                <input type="number" id="minPrice" placeholder="Min $" min="0">
+                <input type="number" id="maxPrice" placeholder="Max $" min="0">
+                <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                <button type="button" id="resetFilterBtn" class="btn btn-outline btn-sm">Reset</button>
+              </form>
+            </section>
 
-          <!-- Shopping Cart Section -->
-          <section class="card" style="margin-bottom:0.8rem;">
-            <div class="card-header">
-              <h4>Shopping Basket</h4>
-              <button id="clearCartBtn" class="btn btn-danger btn-sm" style="display:none;">Clear</button>
-            </div>
-            <div id="cartItemsList" class="cart-items">
-              <p class="empty-text">Basket is empty.</p>
-            </div>
-            <div id="cartSummary" class="cart-summary" style="display:none;">
-              <div>Total: <strong id="cartTotalAmount">$0</strong></div>
-              <button id="checkoutBtn" class="btn btn-success btn-sm">Checkout Order</button>
-            </div>
-          </section>
+            <!-- Cake List Grid -->
+            <section class="card">
+              <h4>Cakes Catalog</h4>
+              <div id="cakesGrid" class="cakes-grid">
+                <div class="loading">Loading catalog...</div>
+              </div>
+            </section>
+          </div>
 
-          <!-- Orders & Rating Section -->
-          <section class="card">
-            <h4>My Orders</h4>
-            <div id="ordersList" class="orders-list">
-              <p class="empty-text">No orders placed yet.</p>
-            </div>
-          </section>
+          <!-- TAB 2: SHOPPING BASKET VIEW -->
+          <div id="customerTabCart" class="customer-tab-content" style="display:none;">
+            <section class="card">
+              <div class="card-header">
+                <h4>Shopping Basket (Order Service)</h4>
+                <button id="clearCartBtn" class="btn btn-danger btn-sm" style="display:none;">Clear Cart</button>
+              </div>
+              <div id="cartItemsList" class="cart-items" style="max-height:340px;">
+                <p class="empty-text">Basket is empty.</p>
+              </div>
+              <div id="cartSummary" class="cart-summary" style="display:none; margin-top:1rem;">
+                <div>Total: <strong id="cartTotalAmount" style="font-size:1.15rem; color:var(--accent);">$0</strong></div>
+                <button id="checkoutBtn" class="btn btn-success btn-sm" style="padding:0.4rem 1.2rem;">Checkout Order</button>
+              </div>
+            </section>
+          </div>
+
+          <!-- TAB 3: MY ORDERS VIEW -->
+          <div id="customerTabOrders" class="customer-tab-content" style="display:none;">
+            <section class="card">
+              <div class="card-header">
+                <h4>My Orders (Order Service)</h4>
+                <button id="refreshUserOrdersBtn" class="btn btn-outline btn-sm">🔄 Refresh Orders</button>
+              </div>
+              <div id="ordersList" class="orders-list" style="max-height:380px;">
+                <p class="empty-text">No orders placed yet.</p>
+              </div>
+            </section>
+          </div>
+
+          <!-- TAB 4: NOTIFICATIONS VIEW -->
+          <div id="customerTabNotifs" class="customer-tab-content" style="display:none;">
+            <section class="card">
+              <div class="card-header">
+                <h4>User Notifications (Notification Service)</h4>
+                <button id="refreshUserNotifsBtn" class="btn btn-outline btn-sm">🔄 Refresh Feed</button>
+              </div>
+              <div id="notifList" class="orders-list" style="max-height:380px;">
+                <p class="empty-text">No notifications found.</p>
+              </div>
+            </section>
+          </div>
         </div>
 
         <!-- ADMIN VIEW -->
@@ -261,21 +291,6 @@
             <p class="empty-text">Click any UI button to trigger API calls!</p>
           </div>
         </section>
-      </div>
-    </div>
-  </div>
-
-  <!-- Notification Drawer Modal -->
-  <div id="notifModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>User Notifications (Notification Service)</h3>
-        <span class="close-modal" id="closeNotif">&times;</span>
-      </div>
-      <div class="modal-body">
-        <div id="notifList">
-          <p class="empty-text">No notifications found.</p>
-        </div>
       </div>
     </div>
   </div>

@@ -5,14 +5,12 @@ let currentBasketId = localStorage.getItem('cake_basket_id') || null;
 let cakesMap = {};
 let apiLogs = [];
 
-// DOM Elements
 const cakesGrid = document.getElementById('cakesGrid');
 const filterForm = document.getElementById('filterForm');
 const resetFilterBtn = document.getElementById('resetFilterBtn');
 
-const cartBtn = document.getElementById('cartBtn');
-const notifBtn = document.getElementById('notifBtn');
 const cartCount = document.getElementById('cartCount');
+const ordersCount = document.getElementById('ordersCount');
 const notifCount = document.getElementById('notifCount');
 
 const cartItemsList = document.getElementById('cartItemsList');
@@ -21,8 +19,8 @@ const cartTotalAmount = document.getElementById('cartTotalAmount');
 const clearCartBtn = document.getElementById('clearCartBtn');
 const checkoutBtn = document.getElementById('checkoutBtn');
 
-const notifModal = document.getElementById('notifModal');
-const closeNotif = document.getElementById('closeNotif');
+const refreshUserOrdersBtn = document.getElementById('refreshUserOrdersBtn');
+const refreshUserNotifsBtn = document.getElementById('refreshUserNotifsBtn');
 const notifList = document.getElementById('notifList');
 
 const ratingModal = document.getElementById('ratingModal');
@@ -348,10 +346,12 @@ async function loadOrders() {
   const res = await apiCall(`/orders?userId=${USER_ID}`);
 
   if (!res.data || !res.data.success || !res.data.data || res.data.data.length === 0) {
+    if (ordersCount) ordersCount.textContent = '0';
     ordersList.innerHTML = '<p class="empty-text">No orders placed yet.</p>';
     return;
   }
 
+  if (ordersCount) ordersCount.textContent = res.data.data.length.toString();
   ordersList.innerHTML = '';
   res.data.data.forEach(order => {
     const box = document.createElement('div');
@@ -458,11 +458,40 @@ resetFilterBtn.addEventListener('click', () => {
   loadCakes();
 });
 
-notifBtn.addEventListener('click', () => {
-  loadNotifications();
-  notifModal.classList.add('active');
+// Customer Navigation Tabs Handler
+const customerTabBtns = document.querySelectorAll('.customer-tab-btn');
+const customerTabContents = document.querySelectorAll('.customer-tab-content');
+
+customerTabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetTab = btn.getAttribute('data-tab');
+
+    customerTabBtns.forEach(b => b.classList.remove('active'));
+    customerTabContents.forEach(c => c.style.display = 'none');
+
+    btn.classList.add('active');
+
+    if (targetTab === 'catalog') {
+      document.getElementById('customerTabCatalog').style.display = 'block';
+    } else if (targetTab === 'cart') {
+      document.getElementById('customerTabCart').style.display = 'block';
+      loadBasket();
+    } else if (targetTab === 'orders') {
+      document.getElementById('customerTabOrders').style.display = 'block';
+      loadOrders();
+    } else if (targetTab === 'notifs') {
+      document.getElementById('customerTabNotifs').style.display = 'block';
+      loadNotifications();
+    }
+  });
 });
-closeNotif.addEventListener('click', () => notifModal.classList.remove('active'));
+
+if (refreshUserOrdersBtn) {
+  refreshUserOrdersBtn.addEventListener('click', loadOrders);
+}
+if (refreshUserNotifsBtn) {
+  refreshUserNotifsBtn.addEventListener('click', loadNotifications);
+}
 closeRating.addEventListener('click', () => ratingModal.classList.remove('active'));
 
 clearCartBtn.addEventListener('click', clearBasket);
@@ -700,36 +729,35 @@ if (adminCancelCakeBtn) {
   adminCancelCakeBtn.addEventListener('click', closeCakeModalFn);
 }
 
-// Mode Toggle Handler (Hides Cart & Notification buttons when in Admin mode)
+// Mode Toggle Handler (Customer View <-> Admin Panel)
 modeToggleBtn.addEventListener('click', () => {
+  const roleBadge = document.getElementById('roleBadge');
   if (currentMode === 'customer') {
     currentMode = 'admin';
     customerView.style.display = 'none';
     adminView.style.display = 'block';
-    headerTitle.textContent = '🛠️ Cake Delight Admin Panel';
+    headerTitle.textContent = 'Cake Delight';
+    if (roleBadge) {
+      roleBadge.textContent = 'ADMIN MODE';
+      roleBadge.className = 'mode-badge admin-mode';
+    }
     userBadge.innerHTML = 'Role: <strong style="color:var(--accent);">Admin</strong>';
     modeToggleBtn.textContent = '👤 Switch to Customer';
-    modeToggleBtn.style.background = '#0284c7';
-    modeToggleBtn.style.borderColor = '#0284c7';
-    
-    // Hide Cart & Notifications buttons in Admin view
-    cartBtn.style.display = 'none';
-    notifBtn.style.display = 'none';
+    modeToggleBtn.className = 'btn btn-primary btn-sm';
 
     switchAdminTab('overview');
   } else {
     currentMode = 'customer';
     customerView.style.display = 'block';
     adminView.style.display = 'none';
-    headerTitle.textContent = 'Cake Delight UI';
+    headerTitle.textContent = 'Cake Delight';
+    if (roleBadge) {
+      roleBadge.textContent = 'CUSTOMER MODE';
+      roleBadge.className = 'mode-badge customer-mode';
+    }
     userBadge.innerHTML = 'User: <strong>user-123</strong>';
-    modeToggleBtn.textContent = '🛠️ Switch to Admin';
-    modeToggleBtn.style.background = '#7c3aed';
-    modeToggleBtn.style.borderColor = '#6d28d9';
-    
-    // Show Cart & Notifications buttons in Customer view
-    cartBtn.style.display = 'inline-block';
-    notifBtn.style.display = 'inline-block';
+    modeToggleBtn.textContent = '🛡️ Switch to Admin';
+    modeToggleBtn.className = 'btn btn-warning btn-sm';
 
     loadCakes();
   }
