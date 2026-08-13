@@ -54,20 +54,36 @@ Manifests for Kubernetes objects (ConfigMaps, Deployments, Services) are located
 minikube start
 ```
 
-### 2. Apply Manifests
+### 2. Configure Environment
+
+```bash
+eval $(minikube docker-env)
+```
+
+### 3. Build Docker Images
+
+```bash
+docker build -t api-gateway:latest ./api-gateway
+docker build -t catalog-service:latest ./catalog-service
+docker build -t notification-service:latest ./notification-service
+docker build -t order-service:latest ./order-service
+docker build -t rating-service:latest ./rating-service
+```
+
+### 4. Apply Manifests
 
 ```bash
 kubectl apply -f k8s/
 ```
 
-### 3. Verify Deployment Status
+### 5. Verify Deployment Status
 
 ```bash
 kubectl get pods
 kubectl get services
 ```
 
-### 4. Expose API Gateway Service
+### 6. Expose API Gateway Service
 
 ```bash
 minikube service api-gateway
