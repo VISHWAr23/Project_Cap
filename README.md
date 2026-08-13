@@ -19,6 +19,7 @@ For detailed deployment and demonstration flows, refer to the dedicated document
 
 - **[Setup & Execution Instructions](SETUP_INSTRUCTIONS.md)**: Comprehensive guide covering Docker Compose execution, Kubernetes manifests (`kubectl`), network port bindings, and microservice health checks.
 - **[End-to-End Application Flow Demonstration](END_TO_END_DEMO.md)**: Technical walkthrough of Customer and Admin workflows, event-driven messaging pipelines, and rating synchronization.
+- **[API Documentation](API_DOCUMENTATION.md)**: Technical reference guide for all REST API endpoints, API Gateway proxies, request/response payload schemas, and health check probes across all microservices.
 
 ---
 
@@ -40,35 +41,6 @@ The user interface is designed with a **50/50 dual-panel architecture** to provi
    - Maintains a chronological activity stream of all network calls triggered by UI interactions.
 
 ---
-
-## Architecture & Component Breakdown
-
-```
-                                  +-----------------------+
-                                  |    HTML/CSS/JS UI     |
-                                  +-----------+-----------+
-                                              | HTTP
-                                              v
-                                  +-----------------------+
-                                  |      API Gateway      | (Port 3000 / 8080)
-                                  +---+---+-------+---+---+
-                                      |   |       |   |
-            +-------------------------+   |       |   +-------------------------+
-            | HTTP                        | HTTP  | HTTP                        | HTTP
-            v                             v       v                             v
-+-----------------------+   +-----------------------+   +-----------------------+   +-----------------------+
-|    Catalog Service    |   |     Order Service     |   |    Rating Service     |   | Notification Service  |
-|      (Port 3001)      |   |      (Port 3002)      |   |      (Port 3003)      |   |      (Port 3004)      |
-+-----------+-----------+   +---+---------------+---+   +-----------+-----------+   +-----------+-----------+
-            |                   |               |                   |                           |
-            v DB                v REST          v RabbitMQ          v DB                        v DB
-    [ catalog_db ]      (Catalog Check)  [ order.created ]   [ rating_db ]           [ notification_db ]
-                                                |
-                                                v
-                                        +---------------+
-                                        |   RabbitMQ    |
-                                        +---------------+
-```
 
 ### Microservices Responsibilities
 
